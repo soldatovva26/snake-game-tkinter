@@ -1,4 +1,5 @@
-"""Логика еды."""
+# -*- coding: utf-8 -*-
+"""Food logic."""
 
 import random
 from settings import GRID_WIDTH, GRID_HEIGHT
@@ -12,7 +13,7 @@ class Food:
 
     def spawn(self, snake_body: list[tuple[int, int]],
               obstacles: set[tuple[int, int]] | None = None) -> None:
-        """Генерирует еду в свободной клетке (не на змейке и не на препятствии)."""
+        """Spawns food in a free cell (not on snake or obstacle)."""
         occupied = set(snake_body) | (obstacles if obstacles else set())
         free = [
             (x, y)
