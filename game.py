@@ -8,13 +8,15 @@ from settings import (
     CELL_SIZE, CANVAS_WIDTH, CANVAS_HEIGHT,
     TICK_MS, TICK_MIN_MS, SPEED_STEP,
     COLOR_BG, COLOR_GRID,
-    COLOR_SNAKE_HEAD, COLOR_SNAKE_BODY, COLOR_FOOD,
+    COLOR_FOOD,
     COLOR_TEXT, COLOR_OVERLAY_BG,
+    COLOR_OBSTACLE, COLOR_OBSTACLE_BORDER,
     DIR_UP, DIR_DOWN, DIR_LEFT, DIR_RIGHT,
     RECORD_FILE,
 )
 from snake import Snake
 from food import Food
+from obstacles import Obstacles
 
 
 class Game:
@@ -76,7 +78,8 @@ class Game:
 
     def _new_game(self):
         self.snake     = Snake()
-        self.food      = Food(self.snake.body)
+        self.obstacles = Obstacles(self.snake.body)
+        self.food      = Food(self.snake.body, self.obstacles.cells)
         self.score     = 0
         self.tick_ms   = TICK_MS
         self.paused    = False
@@ -108,19 +111,22 @@ class Game:
     def _update(self):
         self.snake.move()
 
-        # Столкновения
-        if self.snake.check_wall_collision() or self.snake.check_self_collision():
+        # Столкновения со стенами, собой и препятствиями
+        if (self.snake.check_wall_collision()
+                or self.snake.check_self_collision()
+                or self.snake.check_obstacle_collision(self.obstacles.cells)):
             self.game_over = True
             if self.score > self.record:
                 self.record = self.score
                 self._save_record()
             return
 
-        # Еда
+        # Поедание еды
         if self.snake.head == self.food.position:
             self.snake.grow()
+            self.snake.next_color()          # 🌈 меняем цвет
             self.score += 1
-            self.food.spawn(self.snake.body)
+            self.food.spawn(self.snake.body, self.obstacles.cells)
 
             # Ускорение каждые 5 очков
             if self.score % 5 == 0:
@@ -133,6 +139,7 @@ class Game:
     def _draw(self):
         self.canvas.delete("all")
         self._draw_grid()
+        self._draw_obstacles()
         self._draw_food()
         self._draw_snake()
         self._draw_hud()
@@ -149,9 +156,30 @@ class Game:
         for y in range(0, CANVAS_HEIGHT, CELL_SIZE):
             self.canvas.create_line(0, y, CANVAS_WIDTH, y, fill=COLOR_GRID)
 
+    def _draw_obstacles(self):
+        """Рисует несъедобные блоки."""
+        for (ox, oy) in self.obstacles.cells:
+            x1 = ox * CELL_SIZE + 1
+            y1 = oy * CELL_SIZE + 1
+            x2 = x1 + CELL_SIZE - 2
+            y2 = y1 + CELL_SIZE - 2
+            self.canvas.create_rectangle(
+                x1, y1, x2, y2,
+                fill=COLOR_OBSTACLE,
+                outline=COLOR_OBSTACLE_BORDER,
+                width=2,
+            )
+            # Крестик внутри блока — визуальный маркер "нельзя есть"
+            mx, my = (x1 + x2) // 2, (y1 + y2) // 2
+            self.canvas.create_line(x1+3, y1+3, x2-3, y2-3,
+                                    fill=COLOR_OBSTACLE_BORDER, width=2)
+            self.canvas.create_line(x2-3, y1+3, x1+3, y2-3,
+                                    fill=COLOR_OBSTACLE_BORDER, width=2)
+
     def _draw_snake(self):
+        """Рисует тело змейки текущим цветом палитры."""
         for i, (cx, cy) in enumerate(self.snake.body):
-            color = COLOR_SNAKE_HEAD if i == 0 else COLOR_SNAKE_BODY
+            color = self.snake.color_head if i == 0 else self.snake.color_body
             x1 = cx * CELL_SIZE + 1
             y1 = cy * CELL_SIZE + 1
             x2 = x1 + CELL_SIZE - 2
@@ -175,20 +203,15 @@ class Game:
                                  font=self.font_hud, fill=COLOR_TEXT)
 
     def _draw_overlay(self, title: str, hint: str):
-        # полупрозрачный фон — имитируем через тёмный прямоугольник
         pad = 20
         cx, cy = CANVAS_WIDTH // 2, CANVAS_HEIGHT // 2
 
-        # рамка
         self.canvas.create_rectangle(
             pad, cy - 70, CANVAS_WIDTH - pad, cy + 70,
             fill=COLOR_OVERLAY_BG, outline="#444444", width=2,
         )
-
-        # заголовок
         self.canvas.create_text(cx, cy - 20, text=title,
                                  font=self.font_big, fill=COLOR_TEXT)
-        # подсказка
         self.canvas.create_text(cx, cy + 35, text=hint,
                                  font=self.font_small, fill="#aaaaaa")
 
