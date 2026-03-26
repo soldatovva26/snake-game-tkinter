@@ -3,6 +3,7 @@
 from settings import (
     SNAKE_START_X, SNAKE_START_Y, SNAKE_START_LEN,
     DIR_RIGHT, GRID_WIDTH, GRID_HEIGHT,
+    SNAKE_PALETTES,
 )
 
 
@@ -18,6 +19,10 @@ class Snake:
         self.direction = DIR_RIGHT
         self._next_dir = DIR_RIGHT
         self._grow     = False
+
+        # Цветовая палитра: индекс в SNAKE_PALETTES
+        self._palette_index = 0
+        self.color_head, self.color_body = SNAKE_PALETTES[0]
 
     # --- публичный API ---------------------------------------------------
 
@@ -40,12 +45,21 @@ class Snake:
     def grow(self):
         self._grow = True
 
+    def next_color(self):
+        """Переклярает палитру на следующую при поедании еды."""
+        self._palette_index = (self._palette_index + 1) % len(SNAKE_PALETTES)
+        self.color_head, self.color_body = SNAKE_PALETTES[self._palette_index]
+
     def check_wall_collision(self) -> bool:
         hx, hy = self.body[0]
         return hx < 0 or hx >= GRID_WIDTH or hy < 0 or hy >= GRID_HEIGHT
 
     def check_self_collision(self) -> bool:
         return self.body[0] in self.body[1:]
+
+    def check_obstacle_collision(self, obstacles: set[tuple[int, int]]) -> bool:
+        """Возвращает True, если голова врезалась в препятствие."""
+        return self.body[0] in obstacles
 
     @property
     def head(self) -> tuple[int, int]:
