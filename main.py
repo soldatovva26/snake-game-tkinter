@@ -1,4 +1,5 @@
-"""Точка входа — змейка на tkinter (без сторонних библиотек)."""
+# -*- coding: utf-8 -*-
+"""Entry point - Snake game on tkinter (no third-party libraries)."""
 
 from game import Game
 
