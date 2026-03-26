@@ -1,4 +1,5 @@
-"""Несъедобные препятствия на поле."""
+# -*- coding: utf-8 -*-
+"""Inedible obstacles on the field."""
 
 import random
 import math
@@ -10,14 +11,14 @@ from settings import (
 
 
 class Obstacles:
-    """Генерирует и хранит список несъедобных блоков."""
+    """Generates and stores the list of inedible blocks."""
 
     def __init__(self, snake_body: list[tuple[int, int]]):
         self.cells: set[tuple[int, int]] = set()
         self.spawn(snake_body)
 
     def spawn(self, snake_body: list[tuple[int, int]]) -> None:
-        """Размещает препятствия вдали от змейки и еды."""
+        """Places obstacles away from the snake start position."""
         self.cells = set()
         occupied = set(snake_body)
 
