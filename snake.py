@@ -1,4 +1,5 @@
-"""Логика змейки."""
+# -*- coding: utf-8 -*-
+"""Snake logic."""
 
 from settings import (
     SNAKE_START_X, SNAKE_START_Y, SNAKE_START_LEN,
@@ -20,14 +21,14 @@ class Snake:
         self._next_dir = DIR_RIGHT
         self._grow     = False
 
-        # Цветовая палитра: индекс в SNAKE_PALETTES
+        # Color palette: index into SNAKE_PALETTES
         self._palette_index = 0
         self.color_head, self.color_body = SNAKE_PALETTES[0]
 
-    # --- публичный API ---------------------------------------------------
+    # --- public API ---------------------------------------------------
 
     def change_direction(self, new_dir: tuple[int, int]):
-        """Не позволяет развернуться на 180°."""
+        """Prevents 180-degree reversal."""
         opposite = (-self.direction[0], -self.direction[1])
         if new_dir != opposite:
             self._next_dir = new_dir
@@ -46,7 +47,7 @@ class Snake:
         self._grow = True
 
     def next_color(self):
-        """Переклярает палитру на следующую при поедании еды."""
+        """Switches to the next color palette when food is eaten."""
         self._palette_index = (self._palette_index + 1) % len(SNAKE_PALETTES)
         self.color_head, self.color_body = SNAKE_PALETTES[self._palette_index]
 
@@ -58,7 +59,7 @@ class Snake:
         return self.body[0] in self.body[1:]
 
     def check_obstacle_collision(self, obstacles: set[tuple[int, int]]) -> bool:
-        """Возвращает True, если голова врезалась в препятствие."""
+        """Returns True if the head hits an obstacle."""
         return self.body[0] in obstacles
 
     @property
