@@ -1,4 +1,5 @@
-"""Игровой цикл и отрисовка на tkinter Canvas."""
+# -*- coding: utf-8 -*-
+"""Game loop and rendering on tkinter Canvas."""
 
 import tkinter as tk
 from tkinter import font as tkfont
@@ -20,10 +21,10 @@ from obstacles import Obstacles
 
 
 class Game:
-    """Управляет окном, Canvas и игровым циклом."""
+    """Manages the window, Canvas, and game loop."""
 
     def __init__(self):
-        # --- окно ---
+        # --- window ---
         self.root = tk.Tk()
         self.root.title(WINDOW_TITLE)
         self.root.resizable(False, False)
@@ -39,12 +40,12 @@ class Game:
         )
         self.canvas.pack()
 
-        # --- шрифты ---
+        # --- fonts ---
         self.font_hud   = tkfont.Font(family="Courier", size=14, weight="bold")
         self.font_big   = tkfont.Font(family="Courier", size=36, weight="bold")
         self.font_small = tkfont.Font(family="Courier", size=16)
 
-        # --- состояние ---
+        # --- state ---
         self.record   = self._load_record()
         self.tick_ms  = TICK_MS
         self.paused   = False
@@ -53,7 +54,7 @@ class Game:
 
         self._new_game()
 
-        # --- привязка клавиш ---
+        # --- key bindings ---
         self.root.bind("<Up>",     lambda e: self.snake.change_direction(DIR_UP))
         self.root.bind("<Down>",   lambda e: self.snake.change_direction(DIR_DOWN))
         self.root.bind("<Left>",   lambda e: self.snake.change_direction(DIR_LEFT))
@@ -64,7 +65,7 @@ class Game:
         self.root.bind("<R>",      lambda e: self._restart())
 
     # ------------------------------------------------------------------
-    # Запуск
+    # Start
     # ------------------------------------------------------------------
 
     def run(self):
@@ -73,7 +74,7 @@ class Game:
         self._save_record()
 
     # ------------------------------------------------------------------
-    # Внутренние методы
+    # Internal methods
     # ------------------------------------------------------------------
 
     def _new_game(self):
@@ -105,13 +106,13 @@ class Game:
         self._schedule_tick()
 
     # ------------------------------------------------------------------
-    # Обновление состояния
+    # State update
     # ------------------------------------------------------------------
 
     def _update(self):
         self.snake.move()
 
-        # Столкновения со стенами, собой и препятствиями
+        # Collisions: walls, self, obstacles
         if (self.snake.check_wall_collision()
                 or self.snake.check_self_collision()
                 or self.snake.check_obstacle_collision(self.obstacles.cells)):
@@ -121,19 +122,19 @@ class Game:
                 self._save_record()
             return
 
-        # Поедание еды
+        # Eating food
         if self.snake.head == self.food.position:
             self.snake.grow()
-            self.snake.next_color()          # 🌈 меняем цвет
+            self.snake.next_color()          # change color on eat
             self.score += 1
             self.food.spawn(self.snake.body, self.obstacles.cells)
 
-            # Ускорение каждые 5 очков
+            # Speed up every 5 points
             if self.score % 5 == 0:
                 self.tick_ms = max(self.tick_ms - SPEED_STEP, TICK_MIN_MS)
 
     # ------------------------------------------------------------------
-    # Отрисовка
+    # Rendering
     # ------------------------------------------------------------------
 
     def _draw(self):
@@ -145,10 +146,10 @@ class Game:
         self._draw_hud()
 
         if self.paused and not self.game_over:
-            self._draw_overlay("ПАУЗА", "SPACE — продолжить")
+            self._draw_overlay("PAUSE", "SPACE - continue")
 
         if self.game_over:
-            self._draw_overlay("GAME OVER", "R — новая игра   ESC — выход")
+            self._draw_overlay("GAME OVER", "R - new game   ESC - quit")
 
     def _draw_grid(self):
         for x in range(0, CANVAS_WIDTH, CELL_SIZE):
@@ -157,7 +158,7 @@ class Game:
             self.canvas.create_line(0, y, CANVAS_WIDTH, y, fill=COLOR_GRID)
 
     def _draw_obstacles(self):
-        """Рисует несъедобные блоки."""
+        """Draws inedible blocks."""
         for (ox, oy) in self.obstacles.cells:
             x1 = ox * CELL_SIZE + 1
             y1 = oy * CELL_SIZE + 1
@@ -169,15 +170,14 @@ class Game:
                 outline=COLOR_OBSTACLE_BORDER,
                 width=2,
             )
-            # Крестик внутри блока — визуальный маркер "нельзя есть"
-            mx, my = (x1 + x2) // 2, (y1 + y2) // 2
+            # X mark inside block - visual marker "do not eat"
             self.canvas.create_line(x1+3, y1+3, x2-3, y2-3,
                                     fill=COLOR_OBSTACLE_BORDER, width=2)
             self.canvas.create_line(x2-3, y1+3, x1+3, y2-3,
                                     fill=COLOR_OBSTACLE_BORDER, width=2)
 
     def _draw_snake(self):
-        """Рисует тело змейки текущим цветом палитры."""
+        """Draws the snake body with the current color palette."""
         for i, (cx, cy) in enumerate(self.snake.body):
             color = self.snake.color_head if i == 0 else self.snake.color_body
             x1 = cx * CELL_SIZE + 1
@@ -196,7 +196,7 @@ class Game:
 
     def _draw_hud(self):
         text = f"Score: {self.score}   Best: {self.record}"
-        # тень
+        # shadow
         self.canvas.create_text(9, 9, anchor="nw", text=text,
                                  font=self.font_hud, fill="#000000")
         self.canvas.create_text(8, 8, anchor="nw", text=text,
@@ -216,7 +216,7 @@ class Game:
                                  font=self.font_small, fill="#aaaaaa")
 
     # ------------------------------------------------------------------
-    # Рекорд
+    # Record
     # ------------------------------------------------------------------
 
     def _load_record(self) -> int:
